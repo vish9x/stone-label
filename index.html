@@ -107,10 +107,24 @@ function resetAll() {
 }
 
 // Accepts the column names used in the stock sheet and in list.xlsx ("STOCK id")
-const ID_COLS = ['Stone ID', 'STOCK id', 'Stock ID', 'Stock id'];
+const ID_COLS = ['Stone ID', 'STOCK id'];
 const pick = (r, names) => { const k = names.find(n => n in r); return k === undefined ? '' : r[k]; };
 
-function parseRows(rows) {
+// Column names known to the app. Matching ignores case and extra spaces: "stock id", "Stock ID" and "STOCK id" all work.
+const KNOWN_COLS = ['Stone ID', 'STOCK id', 'Availability', 'Shape', 'Weight', 'Clarity', 'Color', 'Fancy Color',
+  'Fancy Color Intensity', 'Lab', 'Certificate #'];
+const normKey = k => String(k).trim().toLowerCase();
+function normalizeRow(r) {
+  const out = {};
+  for (const k of Object.keys(r)) {
+    const known = KNOWN_COLS.find(c => normKey(c) === normKey(k));
+    out[known || k] = r[k];
+  }
+  return out;
+}
+
+function parseRows(rawRows) {
+  const rows = rawRows.map(normalizeRow);
   if (!rows.length || !ID_COLS.some(n => n in rows[0])) {
     $('warn').textContent = 'This file has no "Stone ID" or "STOCK id" column. Please import the stock sheet.';
     return;
